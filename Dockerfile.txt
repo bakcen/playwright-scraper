@@ -1,18 +1,26 @@
-# Use the official Playwright image
-FROM mcr.microsoft.com/playwright:v1.43.1-jammy
+const express = require("express");
+const { chromium } = require("playwright");
+const app = express();
 
-# Set working directory
-WORKDIR /app
+app.get("/", async (req, res) => {
+  try {
+    const browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox'],  // Important for Fly.io!
+    });
+    const page = await browser.newPage();
+    await page.goto("https://www.nexusloanhub.com", { timeout: 20000 });
 
-# Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install
+    const content = await page.content();
+    await browser.close();
 
-# Copy the rest of your application
-COPY . .
+    res.send(content);
+  } catch (error) {
+    console.error("Scraping failed:", error.message);
+    res.status(500).send("Error scraping site.");
+  }
+});
 
-# Expose the port your server runs on
-EXPOSE 3000
-
-# Start the Node.js server
-CMD ["node", "server.js"]
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
