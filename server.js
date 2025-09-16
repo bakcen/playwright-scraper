@@ -1,26 +1,27 @@
+// server.js
 const express = require("express");
-const { chromium } = require("playwright");
+const scrapeWebsite = require("./scrape");
+
 const app = express();
 
 app.get("/", async (req, res) => {
+  const url = req.query.url;
+
+  if (!url) {
+    return res.status(400).send("❌ Please provide a URL using the ?url= parameter.");
+  }
+
   try {
-    const browser = await chromium.launch({
-      headless: true,
-      args: ['--no-sandbox'],  // Important for Fly.io!
-    });
-    const page = await browser.newPage();
-    await page.goto("https://www.nexusloanhub.com", { timeout: 20000 });
-
-    const content = await page.content();
-    await browser.close();
-
-    res.send(content);
+    const html = await scrapeWebsite(url);
+    res.status(200).send(html);
   } catch (error) {
-    console.error("Scraping failed:", error.message);
-    res.status(500).send("Error scraping site.");
+    console.error("Scraper error:", error.message);
+    res.status(500).send("❌ Error scraping site. " + error.message);
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });

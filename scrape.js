@@ -1,21 +1,27 @@
+// scrape.js
 const { chromium } = require("playwright");
 
-module.exports = async function scrapeWebsite(url) {
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
-    userAgent:
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115.0.0.0 Safari/537.36",
-    locale: "en-US",
+async function scrapeWebsite(url) {
+  if (!url.startsWith("http")) {
+    throw new Error("Invalid URL format. Must start with http or https.");
+  }
+
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox'], // REQUIRED for Fly.io and containerized environments
   });
-  const page = await context.newPage();
+
+  const page = await browser.newPage();
 
   try {
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    const html = await page.content();
+    await page.goto(url, { timeout: 20000 });
+    const content = await page.content();
     await browser.close();
-    return html;
+    return content;
   } catch (error) {
     await browser.close();
-    throw new Error("Failed to scrape: " + error.message);
+    throw new Error(`Failed to scrape: ${error.message}`);
   }
-};
+}
+
+module.exports = scrapeWebsite;
