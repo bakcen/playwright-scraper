@@ -1,27 +1,38 @@
-// server.js
-const express = require("express");
-const scrapeWebsite = require("./scrape");
-
+const express = require('express');
+const scrapeSite = require('./scrape');
 const app = express();
+const port = process.env.PORT || 3000;
 
-app.get("/", async (req, res) => {
+app.use(express.json({ limit: '10mb' }));
+
+// GET route for browser use: ?url=https://example.com
+app.get('/', async (req, res) => {
   const url = req.query.url;
-
-  if (!url) {
-    return res.status(400).send("❌ Please provide a URL using the ?url= parameter.");
-  }
+  if (!url) return res.status(400).send('Missing URL');
 
   try {
-    const html = await scrapeWebsite(url);
-    res.status(200).send(html);
-  } catch (error) {
-    console.error("Scraper error:", error.message);
-    res.status(500).send("❌ Error scraping site. " + error.message);
+    const result = await scrapeSite(url);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error scraping site.');
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// POST route for Copilot/GPT Plugins or other JSON calls
+app.post('/scrape', async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'Missing URL' });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  try {
+    const result = await scrapeSite(url);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error scraping site' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
