@@ -1,21 +1,23 @@
-# Base image
+# Use Playwright base image with necessary browsers
 FROM mcr.microsoft.com/playwright:v1.43.1-jammy
 
-# Create app directory
+# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy dependency files
 COPY package.json package-lock.json* ./
+
+# Install Node.js dependencies
 RUN npm install
 
-# Copy rest of the code
+# Copy app source code
 COPY . .
 
-# Install required browsers (Chromium, Firefox, WebKit)
-RUN npx playwright install --with-deps
+# ✅ Explicitly install browsers — IMPORTANT
+RUN npx playwright install chromium
 
-# Expose port
+# Expose server port
 EXPOSE 3000
 
-# Start the server
+# Start the Node.js server
 CMD ["node", "server.js"]
