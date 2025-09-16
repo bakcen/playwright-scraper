@@ -1,0 +1,13 @@
+{
+  "name": "playwright-scraper",
+  "version": "1.0.0",
+  "description": "A simple Playwright scraper API for Fly.io",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "playwright": "^1.43.1"
+  }
+}
