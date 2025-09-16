@@ -1,29 +1,26 @@
 const express = require("express");
+const { chromium } = require("playwright");
 const app = express();
-const scrapeWebsite = require("./scrape");
 
-app.use(express.json());
-
-app.post("/scrape", async (req, res) => {
-  const { url } = req.body;
-
-  if (!url) {
-    return res.status(400).json({ error: "Missing URL in request body" });
-  }
-
+app.get("/", async (req, res) => {
   try {
-    const html = await scrapeWebsite(url);
-    res.json({ html });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox'],  // Important for Fly.io!
+    });
+    const page = await browser.newPage();
+    await page.goto("https://www.nexusloanhub.com", { timeout: 20000 });
+
+    const content = await page.content();
+    await browser.close();
+
+    res.send(content);
+  } catch (error) {
+    console.error("Scraping failed:", error.message);
+    res.status(500).send("Error scraping site.");
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("🧠 Playwright Scraper API is running!");
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
 });
